@@ -1,7 +1,11 @@
 import os
 from logging import config as logging_config
 
-from core.logger import LOGGING
+from dotenv import load_dotenv
+
+from src.core.logger import LOGGING
+
+load_dotenv()
 
 logging_config.dictConfig(LOGGING)
 
