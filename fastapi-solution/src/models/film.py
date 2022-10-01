@@ -8,15 +8,16 @@ from pydantic import BaseModel
 def orjson_dumps(v, *, default):
     # orjson.dumps возвращает bytes, а pydantic требует unicode, поэтому декодируем
     return orjson.dumps(v, default=default).decode()
-
+ 
 
 class Film(BaseModel):
     id: str
     title: str
-    description: str
-    date_creation: datetime
-    age_limit: int
-    type: str
+    description: str 
+    created: datetime = None
+    age_limit: int = None
+    type: str = None
+    imdb_rating:float
     genre: list
     director: list
     actors: list
