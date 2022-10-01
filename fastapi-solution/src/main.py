@@ -18,23 +18,21 @@ app = FastAPI(
 
 @app.on_event('startup')
 async def startup():
-    pass
-
     # remove when separate elastic service implemented
+    redis.redis = await aioredis.create_redis_pool(
+         address=(
+            config.REDIS_HOST,
+            config.REDIS_PORT),
+            password=config.REDIS_PASSWORD,
+            minsize=10,
+            maxsize=20,
+        )
 
-    # redis.redis = await aioredis.create_redis_pool(
-    #     (
-    #         config.REDIS_HOST,
-    #         config.REDIS_PORT
-    #     ),
-    #     minsize=10,
-    #     maxsize=20,
-    # )
-    # elastic.es = AsyncElasticsearch(
-    #     hosts=[
-    #         f'{config.ELASTIC_HOST}:{config.ELASTIC_PORT}'
-    #     ]
-    # )
+    elastic.es = AsyncElasticsearch(
+        hosts=[
+            f'{config.ELASTIC_HOST}:{config.ELASTIC_PORT}'
+        ]
+    )
 
 
 @app.on_event('shutdown')
