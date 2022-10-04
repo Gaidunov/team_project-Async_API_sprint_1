@@ -3,7 +3,7 @@ from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-from src.api.v1 import films
+from src.api.v1 import films, persons
 from src.core import config
 from src.db import elastic, redis
 
@@ -18,15 +18,15 @@ app = FastAPI(
 
 @app.on_event('startup')
 async def startup():
-    # remove when separate elastic service implemented
     redis.redis = await aioredis.create_redis_pool(
-         address=(
+        address=(
             config.REDIS_HOST,
-            config.REDIS_PORT),
-            password=config.REDIS_PASSWORD,
-            minsize=10,
-            maxsize=20,
-        )
+            config.REDIS_PORT
+         ),
+        password=config.REDIS_PASSWORD,
+        minsize=10,
+        maxsize=20,
+    )
 
     elastic.es = AsyncElasticsearch(
         hosts=[
@@ -46,4 +46,10 @@ app.include_router(
     films.router,
     prefix='/api/v1/films',
     tags=['films']
+)
+
+app.include_router(
+    persons.router,
+    prefix='/api/v1/persons',
+    tags=['persons']
 )
