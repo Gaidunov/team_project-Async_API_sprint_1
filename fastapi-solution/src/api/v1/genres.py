@@ -14,7 +14,7 @@ class Genre(BaseModel):
 class Genres(BaseModel):
     result: list
 
-@router.get('/genres/', response_list=list)
+@router.get('/', response_list=list)
 async def genre_details(genre_service: GenersService = Depends(get_genre_service)) -> list:
     genres = await genre_service.get_by_genres()
     if not genres:
