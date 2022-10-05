@@ -39,7 +39,7 @@ class GenersService:
 
     async def _get_all_genre_from_elastic(self) -> list:
         try:
-            doc = await self.elastic.get('genre')
+            doc = await self.elastic.get('genres')
         except NotFoundError:
             return None
         return doc['hits']['hits']
