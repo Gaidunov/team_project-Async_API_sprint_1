@@ -58,4 +58,8 @@ app.include_router(
     persons.router,
     prefix='/api/v1/persons',
     tags=['persons']
+<<<<<<< HEAD
 )
+=======
+)
+>>>>>>> 79833775c2a71ed3195e161cd6367324aa9d97fc
