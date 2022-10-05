@@ -63,7 +63,7 @@ class GenersService:
         if not data:
             return None
         genre = Genre.parse_raw(data)
-        print('взяли фильм из кэша')
+        print('взяли жанр из кэша')
         return genre
         
     async def _put_all_genre_to_cache(self, genres: list):
