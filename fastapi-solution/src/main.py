@@ -3,7 +3,7 @@ from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-from src.api.v1 import films, persons
+from src.api.v1 import films, persons, genres
 from src.core import config
 from src.db import elastic, redis
 
@@ -46,6 +46,12 @@ app.include_router(
     films.router,
     prefix='/api/v1/films',
     tags=['films']
+)
+
+app.include_router(
+    genres.router,
+    prefix='/api/v1/genres',
+    tags=['genres']
 )
 
 app.include_router(

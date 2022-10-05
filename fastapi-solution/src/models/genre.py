@@ -10,7 +10,7 @@ def orjson_dumps(v, *, default):
 class Genre(BaseModel):
     id: str
     title: str
-    imdb_rating: float
+    imdb_rating: float = 0.0
 
     class Config:
         json_loads = orjson.loads
