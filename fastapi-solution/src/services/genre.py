@@ -28,7 +28,7 @@ class GenersService:
         return genre
 
     async def get_by_genres(self) -> list:
-        genres = await self._genre_from_cache()
+        genres = await self._all_genre_from_cache()
         if not genres:
             genres = await self._get_genre_from_elastic()
             if not genres:
