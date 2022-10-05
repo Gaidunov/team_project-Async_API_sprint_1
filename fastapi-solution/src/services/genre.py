@@ -1,9 +1,11 @@
 from functools import lru_cache
-from typing import Optional
+from typing import Optional, Union
+import json
 
 from aioredis import Redis
 from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
+from .utils import get_result
 
 from src.db.elastic import get_elastic
 from src.db.redis import get_redis
@@ -23,36 +25,139 @@ class GenersService:
             genre = await self._get_genre_from_elastic(genre_id)
             if not genre:
                 return None
-            # добавляем в кэш
+
             await self._put_genre_to_cache(genre)
         return genre
 
-    async def get_by_genres(self) -> list:
-        genres = await self._all_genre_from_cache()
-        if not genres:
-            genres = await self._get_all_genre_from_elastic()
-            if not genres:
-                return None
-            await self._put_all_genre_to_cache(genres)
+    async def get_genres(
+        self,
+        page_size: int = 10,
+        page_number: int = 0,
+        order_by: str = 'id'
+    ) -> Union[dict, None]:
+        order = 'desc'
+        if order_by.startswith('-'):
+            order = 'asc'
+            order_by = order_by[1:]
 
-        return genres
+        elastic_query = {
+            'size': page_size,
+            'from': page_number * page_size,
+            'sort': [
+                {
+                    order_by: {
+                        'order': order,
+                    }
+                }
+            ]
+        }
+        data = await self._get_search_result_from_cache(
+            f'genres_{str(elastic_query)}',
+        )
+        if data:
+            return get_result(
+                data,
+                page_size,
+                page_number,
+                Genre
+            )
+        resp = await self.elastic.search(
+            index='genres',
+            body=elastic_query
+        )
+        await self._put_search_result_to_cache(
+            f'genres_{str(elastic_query)}',
+            resp,
+        )
+        return get_result(
+            resp,
+            page_size,
+            page_number,
+            Genre
+        )
 
-    async def _get_all_genre_from_elastic(self) -> list:
-        try:
-            doc = await self.elastic.get('genres')
-        except NotFoundError:
-            return None
-        return doc['hits']['hits']
-
-    async def _all_genre_from_cache(self) -> list:
-        data = await self.redis.get('genres')
+    async def _get_all_genres_from_cache(
+        self,
+    ) -> Union[dict, None]:
+        data = await self.redis.get('all_genres')
         if not data:
             return None
-        return 
+
+        return json.loads(data)
+
+    async def _put_search_result_to_cache(
+        self,
+        key: str,
+        search_result: str,
+    ):
+        await self.redis.set(
+            key,
+            json.dumps(search_result),
+            expire=GENRE_CACHE_EXPIRE_IN_SECONDS,
+        )
+
+    async def get_by_search_word(
+        self,
+        search_word: str,
+        page_size: int = 10,
+        page_number: int = 0
+    ) -> dict:
+        elastic_query = {
+            'size': page_size,
+            'from': page_number * page_size,
+            'query': {
+                'match': {
+                    'title': {
+                        'query': search_word
+                    }
+                }
+            }
+        }
+
+        data = await self._get_search_result_from_cache(
+            str(elastic_query)
+        )
+        if data:
+            return get_result(
+                data,
+                page_size,
+                page_number,
+                Genre
+            )
+        resp = await self.elastic.search(
+            index='genres',
+            body=elastic_query
+        )
+        await self._put_search_result_to_cache(
+            str(elastic_query),
+            resp,
+        )
+        return get_result(
+            resp,
+            page_size,
+            page_number,
+            Genre
+        )
+
+    async def _get_search_result_from_cache(
+        self,
+        key: str,
+    ) -> Union[dict, None]:
+        data = await self.redis.get(key)
+        if not data:
+            return None
+
+        return json.loads(data)
     
-    async def _get_genre_from_elastic(self, genre_id: str) -> Optional[Genre]:
+    async def _get_genre_from_elastic(
+        self,
+        genre_id: str
+    ) -> Optional[Genre]:
         try:
-            genre = await self.elastic.get('genres', genre_id)
+            genre = await self.elastic.get(
+                'genres',
+                genre_id
+            )
         except NotFoundError:
             return None
 
@@ -62,20 +167,21 @@ class GenersService:
         data = await self.redis.get(genre_id)
         if not data:
             return None
+
         genre = Genre.parse_raw(data)
-        print('взяли жанр из кэша')
         return genre
-        
-    async def _put_all_genre_to_cache(self, genres: list):
-        await self.redis.set('genres', genres, expire=GENRE_CACHE_EXPIRE_IN_SECONDS)
 
     async def _put_genre_to_cache(self, genre: Genre):
-        await self.redis.set(genre.id, genre.json(), expire=GENRE_CACHE_EXPIRE_IN_SECONDS)
+        await self.redis.set(
+            genre.id,
+            genre.json(),
+            expire=GENRE_CACHE_EXPIRE_IN_SECONDS
+        )
 
 
 @lru_cache()
 def get_genre_service(
-        redis: Redis = Depends(get_redis),
-        elastic: AsyncElasticsearch = Depends(get_elastic),
+    redis: Redis = Depends(get_redis),
+    elastic: AsyncElasticsearch = Depends(get_elastic),
 ) -> GenersService:
     return GenersService(redis, elastic)

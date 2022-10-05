@@ -17,8 +17,8 @@ class Person(BaseModel):
 
 
 class Persons(BaseModel):
-    pagination: Dict
-    result: List
+    pagination: dict
+    result: list
 
 
 @router.get('/{person_id}', response_model=Person)
@@ -48,17 +48,17 @@ async def search_person_by_word(
         default=0,
         ge=0
     ),
-    film_service: PersonService = Depends(get_person_service),
+    person_service: PersonService = Depends(get_person_service),
 ) -> Persons:
-    films = await film_service.get_by_search_word(
+    persons = await person_service.get_by_search_word(
         search_word,
         page_size=page_size,
         page_number=page_number
     )
 
     return Persons(
-        pagination=films['pagination'],
-        result=films['result']
+        pagination=persons['pagination'],
+        result=persons['result']
     )
 
 
@@ -73,7 +73,7 @@ async def get_all_persons(
     person_service: PersonService = Depends(get_person_service),
 ) -> Persons:
 
-    films = await person_service.get_films(
+    films = await person_service.get_persons(
         page_size=page_size,
         page_number=page_number,
         order_by=sort

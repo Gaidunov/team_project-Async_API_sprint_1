@@ -1,5 +1,6 @@
+import json
 from functools import lru_cache
-from typing import Optional
+from typing import Optional, Union
 
 from aioredis import Redis
 from elasticsearch import AsyncElasticsearch, NotFoundError
@@ -37,7 +38,7 @@ class PersonService:
             await self._put_person_to_cache(person)
         return person
 
-    async def get_films(
+    async def get_persons(
         self,
         page_size: int = 10,
         page_number: int = 0,
@@ -59,16 +60,50 @@ class PersonService:
                 }
             ]
         }
-
+        data = await self._get_search_result_from_cache(
+            f'persons_{str(elastic_query)}',
+        )
+        if data:
+            return get_result(
+                data,
+                page_size,
+                page_number,
+                Person
+            )
         resp = await self.elastic.search(
             index='person',
             body=elastic_query
+        )
+        await self._put_search_result_to_cache(
+            f'persons_{str(elastic_query)}',
+            resp,
         )
         return get_result(
             resp,
             page_size,
             page_number,
             Person
+        )
+
+    async def _get_search_result_from_cache(
+        self,
+        key: str,
+    ) -> Union[dict, None]:
+        data = await self.redis.get(key)
+        if not data:
+            return None
+
+        return json.loads(data)
+
+    async def _put_search_result_to_cache(
+        self,
+        key: str,
+        search_result: str,
+    ):
+        await self.redis.set(
+            key,
+            json.dumps(search_result),
+            expire=PERSON_CACHE_EXPIRE_IN_SECONDS,
         )
 
     async def get_by_search_word(
@@ -87,11 +122,24 @@ class PersonService:
                 }
             }
         }
+        data = await self._get_search_result_from_cache(
+            str(elastic_query)
+        )
+        if data:
+            return get_result(
+                data,
+                page_size,
+                page_number,
+                Person
+            )
         resp = await self.elastic.search(
             index='person',
             body=elastic_query
         )
-
+        await self._put_search_result_to_cache(
+            str(elastic_query),
+            resp,
+        )
         return get_result(
             resp,
             page_size,
