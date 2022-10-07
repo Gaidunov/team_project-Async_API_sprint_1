@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from pydantic.schema import List, Dict
 
 from src.services.person import PersonService, get_person_service
+from src.core.constants import NOT_FOUND_MESS
 
 router = APIRouter()
 
@@ -30,7 +31,7 @@ async def get_person_by_id(
     if not person:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='film not found'
+            detail=f'film {NOT_FOUND_MESS}'
         )
 
     return Person(**person.dict())
