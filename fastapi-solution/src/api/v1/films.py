@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from pydantic.schema import List, Dict
 
 from src.services.film import FilmService, get_film_service
+from src.core.constants import NOT_FOUND_MESS
 
 router = APIRouter()
 
@@ -28,7 +29,7 @@ async def get_movie_by_id(film_id, film_service: FilmService = Depends(get_film_
     if not film:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail='film not found'
+            detail=f'film {NOT_FOUND_MESS}'
         )
 
     return Film(**film.dict())
