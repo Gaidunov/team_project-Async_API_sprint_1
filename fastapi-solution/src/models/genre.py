@@ -1,17 +1,7 @@
-import orjson
-
-from pydantic import BaseModel
+from .base_model import BaseOrjsonModel
 
 
-def orjson_dumps(v, *, default):
-    return orjson.dumps(v, default=default).decode()
-
-
-class Genre(BaseModel):
+class Genre(BaseOrjsonModel):
     id: str
     title: str
     imdb_rating: float = 0.0
-
-    class Config:
-        json_loads = orjson.loads
-        json_dumps = orjson_dumps
