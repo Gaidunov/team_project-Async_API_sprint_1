@@ -26,6 +26,7 @@ async def get_person_by_id(
     person_id: str,
     person_service: PersonService = Depends(get_person_service)
 ) -> Person:
+    """## Get person name, role and film_ids by id"""
     person = await person_service.get_by_id(person_id)
     if not person:
         raise HTTPException(
@@ -50,6 +51,7 @@ async def search_person_by_word(
     ),
     person_service: PersonService = Depends(get_person_service),
 ) -> Persons:
+    """## Search person by the word in name"""
     persons = await person_service.get_by_search_word(
         search_word,
         page_size=page_size,
@@ -64,15 +66,15 @@ async def search_person_by_word(
 
 @router.get('/')
 async def get_all_persons(
-    page_size: int = Query(ge=1, le=100, default=10),
-    page_number: int = Query(default=0, ge=0),
+    page_size: int = Query(ge=1, le=100, default=10, alias='page[size]'),
+    page_number: int = Query(default=0, ge=0, alias='page[number]'),
     sort: str = Query(
         default='id',
         regex='^-?(id)',
         description='You can use only: id, -id'),
     person_service: PersonService = Depends(get_person_service),
 ) -> Persons:
-
+    """## List all persons"""
     films = await person_service.get_persons(
         page_size=page_size,
         page_number=page_number,

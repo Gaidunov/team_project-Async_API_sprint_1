@@ -22,13 +22,14 @@ class Genres(BaseModel):
 async def genre_details(
     genre_service: GenersService = Depends(get_genre_service)
 ) -> Genres:
+    """## List all genres"""
     genres = await genre_service.get_genres()
     if not genres:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail='genre not found'
         )
-    logger.info('type', type=str(genres))
+    # logger.info('type', type=str(genres))
 
     return Genres(
         pagination=genres['pagination'],
@@ -41,6 +42,7 @@ async def get_genre_by_id(
     genre_id: str,
     genre_service: GenersService = Depends(get_genre_service)
 ):
+    """## Get genre name by id"""
     genre = await genre_service.get_by_id(genre_id)
     if not genre:
         raise HTTPException(
@@ -65,6 +67,7 @@ async def search_genre_by_word(
     ),
     genre_service: GenersService = Depends(get_genre_service),
 ) -> Genres:
+    """## Search genre by the word in the name"""
     genres = await genre_service.get_by_search_word(
         search_word,
         page_size=page_size,
