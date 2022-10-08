@@ -15,6 +15,9 @@ PERSON_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 
 
 class PersonService:
+    PERSON_BY_ID_KEY_TEMPLATE = 'person_id_{0}'
+    SEARCH_PERSON_KEY_TEMPLATE = 'search_person_query_params_{0}'
+
     def __init__(
         self,
         redis: Redis,
@@ -31,7 +34,7 @@ class PersonService:
             person_id
         )
         if not person:
-            person = await self._get_film_from_elastic(person_id)
+            person = await self._get_person_from_elastic(person_id)
             if not person:
                 return None
 
@@ -61,7 +64,7 @@ class PersonService:
             ]
         }
         data = await self._get_search_result_from_cache(
-            f'persons_{str(elastic_query)}',
+            str(elastic_query),
         )
         if data:
             return get_result(
@@ -89,7 +92,9 @@ class PersonService:
         self,
         key: str,
     ) -> Union[dict, None]:
-        data = await self.redis.get(key)
+        data = await self.redis.get(
+            self.SEARCH_PERSON_KEY_TEMPLATE.format(key)
+        )
         if not data:
             return None
 
@@ -101,7 +106,7 @@ class PersonService:
         search_result: str,
     ):
         await self.redis.set(
-            key,
+            self.SEARCH_PERSON_KEY_TEMPLATE.format(key),
             json.dumps(search_result),
             expire=PERSON_CACHE_EXPIRE_IN_SECONDS,
         )
@@ -147,7 +152,7 @@ class PersonService:
             Person
         )
 
-    async def _get_film_from_elastic(
+    async def _get_person_from_elastic(
         self,
         person_id: str
     ) -> Optional[Person]:
@@ -165,7 +170,9 @@ class PersonService:
         self,
         person_id: str
     ) -> Optional[Person]:
-        data = await self.redis.get(person_id)
+        data = await self.redis.get(
+            self.PERSON_BY_ID_KEY_TEMPLATE.format(person_id)
+        )
         if not data:
             return None
 
@@ -177,7 +184,7 @@ class PersonService:
         person: Person,
     ) -> None:
         await self.redis.set(
-            person.id,
+            self.PERSON_BY_ID_KEY_TEMPLATE.format(person.id),
             person.json(),
             expire=PERSON_CACHE_EXPIRE_IN_SECONDS
         )

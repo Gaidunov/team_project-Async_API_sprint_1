@@ -15,6 +15,9 @@ GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 
 
 class GenersService:
+    GENRE_BY_ID_KEY_TEMPLATE = 'genre_id_{0}'
+    SEARCH_GENRE_KEY_TEMPLATE = 'search_genre_query_params_{0}'
+
     def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
         self.redis = redis
         self.elastic = elastic
@@ -52,7 +55,7 @@ class GenersService:
             ]
         }
         data = await self._get_search_result_from_cache(
-            f'genres_{str(elastic_query)}',
+            str(elastic_query),
         )
         if data:
             return get_result(
@@ -66,7 +69,7 @@ class GenersService:
             body=elastic_query
         )
         await self._put_search_result_to_cache(
-            f'genres_{str(elastic_query)}',
+            str(elastic_query),
             resp,
         )
         return get_result(
@@ -76,22 +79,13 @@ class GenersService:
             Genre
         )
 
-    async def _get_all_genres_from_cache(
-        self,
-    ) -> Union[dict, None]:
-        data = await self.redis.get('all_genres')
-        if not data:
-            return None
-
-        return json.loads(data)
-
     async def _put_search_result_to_cache(
         self,
         key: str,
         search_result: str,
     ):
         await self.redis.set(
-            key,
+            self.SEARCH_GENRE_KEY_TEMPLATE.format(key),
             json.dumps(search_result),
             expire=GENRE_CACHE_EXPIRE_IN_SECONDS,
         )
@@ -143,7 +137,9 @@ class GenersService:
         self,
         key: str,
     ) -> Union[dict, None]:
-        data = await self.redis.get(key)
+        data = await self.redis.get(
+            self.SEARCH_GENRE_KEY_TEMPLATE.format(key)
+        )
         if not data:
             return None
 
@@ -164,7 +160,9 @@ class GenersService:
         return Genre(**genre['_source'])
 
     async def _genre_from_cache(self, genre_id: str) -> Optional[Genre]:
-        data = await self.redis.get(genre_id)
+        data = await self.redis.get(
+            self.GENRE_BY_ID_KEY_TEMPLATE.format(genre_id)
+        )
         if not data:
             return None
 
@@ -173,7 +171,7 @@ class GenersService:
 
     async def _put_genre_to_cache(self, genre: Genre):
         await self.redis.set(
-            genre.id,
+            self.GENRE_BY_ID_KEY_TEMPLATE.format(genre.id),
             genre.json(),
             expire=GENRE_CACHE_EXPIRE_IN_SECONDS
         )
