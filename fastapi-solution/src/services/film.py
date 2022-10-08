@@ -15,6 +15,9 @@ FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 
 
 class FilmService:
+    FILM_BY_ID_KEY_TEMPLATE = 'film_id_{0}'
+    SEARCH_FILM_KEY_TEMPLATE = 'search_film_query_params_{0}'
+
     def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
         self.redis = redis
         self.elastic = elastic
@@ -107,7 +110,9 @@ class FilmService:
         return Film(**film['_source'])
 
     async def _film_from_cache(self, film_id: str) -> Optional[Film]:
-        data = await self.redis.get(film_id)
+        data = await self.redis.get(
+            self.FILM_BY_ID_KEY_TEMPLATE.format(film_id)
+        )
         if not data:
             return None
         film = Film.parse_raw(data)
@@ -117,7 +122,9 @@ class FilmService:
         self,
         key: str,
     ) -> Union[str, None]:
-        data = await self.redis.get(key)
+        data = await self.redis.get(
+            self.SEARCH_FILM_KEY_TEMPLATE.format(key)
+        )
         if not data:
             return None
 
@@ -129,13 +136,17 @@ class FilmService:
         search_result: str,
     ):
         await self.redis.set(
-            key,
+            self.SEARCH_FILM_KEY_TEMPLATE.format(key),
             json.dumps(search_result),
             expire=FILM_CACHE_EXPIRE_IN_SECONDS,
         )
 
     async def _put_film_to_cache(self, film: Film):
-        await self.redis.set(film.id, film.json(), expire=FILM_CACHE_EXPIRE_IN_SECONDS)
+        await self.redis.set(
+            self.FILM_BY_ID_KEY_TEMPLATE.format(film.id),
+            film.json(),
+            expire=FILM_CACHE_EXPIRE_IN_SECONDS
+        )
 
 
 @lru_cache()
