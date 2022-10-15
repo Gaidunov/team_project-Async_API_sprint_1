@@ -24,7 +24,7 @@ from tests.functional.settings import test_settings_genre
 )
 
 @pytest.mark.asyncio
-async def test_all_genre(es_write_data, make_get_request, query_data, expected_answer, es_client, delete_index):
+async def test_all_genre(es_write_data, make_get_request, query_data, expected_answer, es_client):
     es_data = [{
         'id': str(uuid.uuid4()),
         'title': 'The Star',
@@ -55,7 +55,7 @@ async def test_all_genre(es_write_data, make_get_request, query_data, expected_a
 )
 
 @pytest.mark.asyncio
-async def test_genre_on_id(es_write_data, make_get_request, query_data, expected_answer, es_client, delete_index):
+async def test_genre_on_id(es_write_data, make_get_request, query_data, expected_answer, es_client):
     id_uid = str(uuid.uuid4())
     es_data = {
         'id': id_uid,
