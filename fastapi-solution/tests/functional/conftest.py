@@ -74,5 +74,5 @@ async def delete_index(f_index_name: str):
         async with aiohttp.ClientSession() as session: 
             async with session.delete(delete_url) as response:
                 await response.json(content_type=None)
-                print('удалили индекс', test_settings.es_index)
+                print('удалили индекс', f_index_name)
     return inner
