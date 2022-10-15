@@ -70,3 +70,27 @@ os.environ['ELASTIC_INDEX_TO_TEST'] : {
 }
 }
 
+ES_GENRES_MAPPING = {
+os.environ['ELASTIC_INDEX_TO_TEST'] : {
+    "mappings": {
+    "dynamic": "strict",
+    "properties": {
+        "id": {
+            "type": "keyword"
+        },
+        "title": {
+            "type": "text",
+            "analyzer": "ru_en",
+            "fields": {
+                "raw": {
+                    "type": "keyword"
+                }
+            }
+        },
+        "imdb_rating": {
+            "type": "float"
+        }
+    }
+}
+}
+}
