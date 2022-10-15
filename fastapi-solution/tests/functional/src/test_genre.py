@@ -39,9 +39,6 @@ async def test_all_genre(es_write_data, make_get_request, query_data, expected_a
     status, body = await make_get_request(url, params)
     assert body['result'][0]['imdb_rating'] == expected_answer['rating']
     assert status == 200
-    
-    #удаляем на всякий
-    await delete_index()
 
 @pytest.mark.parametrize(
     'query_data, expected_answer',
@@ -73,6 +70,3 @@ async def test_genre_on_id(es_write_data, make_get_request, query_data, expected
 
     assert expected_answer['status'] == status
     assert expected_answer['length'] == len(body['result'])
-    
-    #удалили индекс для чистоты эксперимента
-    await delete_index()
