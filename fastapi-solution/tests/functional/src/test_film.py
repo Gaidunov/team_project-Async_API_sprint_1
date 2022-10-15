@@ -9,12 +9,12 @@ from tests.functional.settings import test_settings
     'query_data, expected_answer',
     [
         (
-                {'id_': '1'},
-                {'status': 200, 'ok_body': {'id': '1', 'title': 'The Star', 'imdb_rating': 8.5} }
+            {'id_': '1'},
+            {'status': 200, 'ok_body': {'id': '1', 'title': 'The Star', 'imdb_rating': 8.5} }
         ),
         (
-                {'id_': '2'},
-                {'status': 404, 'ok_body': {'detail': 'film not found'}}
+            {'id_': '2'},
+            {'status': 404, 'ok_body': {'detail': 'film not found'}}
         )
     ]
 )
