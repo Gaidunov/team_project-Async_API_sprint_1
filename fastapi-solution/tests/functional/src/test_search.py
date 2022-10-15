@@ -1,4 +1,5 @@
 
+import os
 import datetime
 import uuid
 import json
@@ -13,8 +14,22 @@ from tests.functional.settings import test_settings
 #  Название теста должно начинаться со слова `test_`
 #  Любой тест с асинхронными вызовами нужно оборачивать декоратором `pytest.mark.asyncio`, который следит за запуском и работой цикла событий. 
 
+    
+@pytest.mark.parametrize(
+    'query_data, expected_answer',
+    [
+        (
+                {'search_word': 'The Star'},
+                {'length': 10, 'status':200}
+        ),
+        (
+                {'search_word': 'Mashed potato'},
+                {'status': 200, 'length': 0}
+        )
+    ]
+)
 @pytest.mark.asyncio
-async def test_search():
+async def test_search(es_write_data, make_get_request, query_data, expected_answer, es_client, delete_index):
 
     # 1. Генерируем данные для ES
 
@@ -39,38 +54,18 @@ async def test_search():
         'updated_at': datetime.datetime.now().isoformat(),
         'film_work_type': 'movie'
     } for _ in range(60)]
-     
-    bulk_query = []
-    for row in es_data:
-        bulk_query.extend([
-            json.dumps({'index': {'_index': test_settings.es_index, '_id': row[test_settings.es_id_field]}}),
-            json.dumps(row)
-        ])
 
-    str_query = '\n'.join(bulk_query) + '\n'
-
-    # 2. Загружаем данные в ES
-
-    es_client = AsyncElasticsearch(hosts=test_settings.es_host, 
-                                   validate_cert=False, 
-                                   use_ssl=False)
-    response = await es_client.bulk(str_query, refresh=True)
-    await es_client.close()
-    if response['errors']:
-        raise Exception('Ошибка записи данных в Elasticsearch')
-    
+    # загружаем в ES    
+    await es_write_data(es_data)
     # 3. Запрашиваем данные из ES по API
+    search_url = test_settings.service_url + '/api/v1/films/search/'
+    status, body = await make_get_request(search_url, query_data)
 
-    session = aiohttp.ClientSession()
-    url = test_settings.service_url + '/api/v1/search'
-    query_data = {'search': 'The Star'}
-    async with session.get(url, params=query_data) as response:
-        body = await response.json()
-        headers = response.headers
-        status = response.status
-    await session.close()
+    assert expected_answer['status'] == status
+    assert expected_answer['length'] == len(body['result'])
+    
+    #удалили индекс для чистоты эксперимента
+    await delete_index()
 
-    # 4. Проверяем ответ 
 
-    assert status == 200
-    assert len(response.body) == 50 
+
