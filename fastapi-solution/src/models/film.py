@@ -5,7 +5,7 @@ from .base_model import BaseOrjsonModel
 class Film(BaseOrjsonModel):
     id: str
     title: str
-    description: str
+    description: str = None
     created: datetime = None
     age_limit: int = None
     type: str = None
