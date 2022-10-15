@@ -1,1 +1,0 @@
-from .es_mapping import ES_MOVIES_MAPPING

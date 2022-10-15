@@ -9,9 +9,15 @@ from tests.functional.settings import test_settings
 from typing import List
 
 
+@pytest.fixture()
+def f_index_name() -> str:
+    return 'movies'
+
+
 @pytest.fixture
 def event_loop(scope='session'):
     yield asyncio.get_event_loop()
+
 
 def pytest_sessionfinish(session, exitstatus):
     asyncio.get_event_loop().close()
@@ -27,6 +33,7 @@ async def make_get_request():
                 return status, body 
                      
     return inner
+
 
 @pytest.fixture(scope='session')
 async def es_client():
@@ -47,9 +54,13 @@ def get_es_bulk_query(es_data, index, id_field):
 
 
 @pytest.fixture
-def es_write_data(es_client):
+def es_write_data(es_client, f_index_name: str):
     async def inner(data: List[dict]):
-        str_query = get_es_bulk_query(data, test_settings.es_index, test_settings.es_id_field)
+        str_query = get_es_bulk_query(
+            data,
+            f_index_name,
+            test_settings.es_id_field
+        )
         response = await es_client.bulk(body=str_query, refresh=True)
         if response['errors']:
             raise Exception('Ошибка записи данных в Elasticsearch')
@@ -57,11 +68,11 @@ def es_write_data(es_client):
 
 
 @pytest.fixture
-async def delete_index():
+async def delete_index(f_index_name: str):
     async def inner():
-        delete_url = test_settings.es_host + '/' + test_settings.es_index
+        delete_url = test_settings.es_host + '/' + f_index_name
         async with aiohttp.ClientSession() as session: 
             async with session.delete(delete_url) as response:
                 await response.json(content_type=None)
-                print('удалили индекс', test_settings.es_index)
+                print('удалили индекс', f_index_name)
     return inner
