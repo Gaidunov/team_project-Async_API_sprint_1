@@ -2,10 +2,6 @@
 
 go: collect-static docker-up-dev create-db populate-db django-setup
 
-# setup: collect-static docker-up-dev create-db populate-db django-setup docker-up-prod
-# dev: collect-static docker-up-dev create-db populate-db django-setup 
-
-
 collect-static:
 	cd app && python3 manage.py collectstatic && cd ..
 
