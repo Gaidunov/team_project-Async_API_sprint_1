@@ -1,5 +1,5 @@
 import datetime
-
+from typing import Callable
 import pytest
 
 from tests.functional.settings import test_settings
@@ -19,7 +19,13 @@ from tests.functional.settings import test_settings
     ]
 )
 @pytest.mark.asyncio
-async def test_film_by_id( query_data, expected_answer, es_write_data, make_get_request, delete_index):
+async def test_film_by_id(
+    query_data: dict,
+    expected_answer: dict,
+    es_write_data: Callable,
+    make_get_request: Callable,
+    delete_index: Callable,
+) -> None:
     es_data = [{
         'id': 1,
         'imdb_rating': 8.5,
@@ -51,47 +57,54 @@ async def test_film_by_id( query_data, expected_answer, es_write_data, make_get_
 
     await delete_index()
 
+
 @pytest.mark.parametrize(
     'query_data, expected_answer',
     [
         (
-                {'sorting': 'imdb_rating'},
-                {'status': 200, 'rating': 19.0 }
+            {'sorting': 'imdb_rating'},
+            {'status': 200, 'rating': 19.0 }
         ),
         (
-                {'sorting': '-imdb_rating'},
-                {'status': 200, 'rating':0}
+            {'sorting': '-imdb_rating'},
+            {'status': 200, 'rating':0}
         )
     ]
 )
 @pytest.mark.asyncio
-async def test_get_all_films( query_data, expected_answer, es_write_data, make_get_request, delete_index):
+async def test_get_all_films(
+    query_data: dict,
+    expected_answer: dict,
+    es_write_data: Callable,
+    make_get_request: Callable,
+    delete_index: Callable,
+) -> None:
     es_data = [{
-    'id': i,
-    'imdb_rating': i,
-    'genre': ['Action', 'Sci-Fi'],
-    'title': 'The Star',
-    'description': 'New World',
-    'director': ['Stan'],
-    'actors_names': ['Ann', 'Bob'],
-    'writers_names': ['Ben', 'Howard'],
-    'actors': [
-        {'id': '111', 'name': 'Ann'},
-        {'id': '222', 'name': 'Bob'}
-    ],
-    'writers': [
-        {'id': '333', 'name': 'Ben'},
-        {'id': '444', 'name': 'Howard'}
-    ],
-    'created_at': datetime.datetime.now().isoformat(),
-    'updated_at': datetime.datetime.now().isoformat(),
-    'film_work_type': 'movie'
-    } for i in range(20) ]
+        'id': i,
+        'imdb_rating': i,
+        'genre': ['Action', 'Sci-Fi'],
+        'title': 'The Star',
+        'description': 'New World',
+        'director': ['Stan'],
+        'actors_names': ['Ann', 'Bob'],
+        'writers_names': ['Ben', 'Howard'],
+        'actors': [
+            {'id': '111', 'name': 'Ann'},
+            {'id': '222', 'name': 'Bob'}
+        ],
+        'writers': [
+            {'id': '333', 'name': 'Ben'},
+            {'id': '444', 'name': 'Howard'}
+        ],
+        'created_at': datetime.datetime.now().isoformat(),
+        'updated_at': datetime.datetime.now().isoformat(),
+        'film_work_type': 'movie'
+    } for i in range(20)]
 
     await es_write_data(es_data)
 
     url = test_settings.service_url + f'/api/v1/films/'
-    params = {'page[size]':10, 'sort':query_data['sorting'], 'page[number]':0}
+    params = {'page[size]': 10, 'sort': query_data['sorting'], 'page[number]': 0}
 
     status, body = await make_get_request(url, params)
     assert body['result'][0]['imdb_rating'] == expected_answer['rating']

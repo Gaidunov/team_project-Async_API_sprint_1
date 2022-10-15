@@ -5,7 +5,7 @@ from tests.functional.settings import test_settings
 
 
 @pytest.fixture()
-def f_index_name():
+def f_index_name() -> str:
     return 'person'
 
 
@@ -40,7 +40,7 @@ async def test_person_by_id(
     es_write_data: Callable,
     make_get_request: Callable,
     delete_index: Callable,
-):
+) -> None:
     es_data = [{
         'id': 1,
         'name': 'Jim Kerry',
@@ -78,7 +78,7 @@ async def test_get_all_persons(
     es_write_data: Callable,
     make_get_request: Callable,
     delete_index: Callable,
-):
+) -> None:
     es_data = [{
         'id': i,
         'name': f'Actor_{i}',

@@ -1,6 +1,7 @@
 import datetime
 import uuid
-
+from typing import Callable
+from elasticsearch import AsyncElasticsearch
 import pytest
 
 from tests.functional.settings import test_settings
@@ -10,17 +11,24 @@ from tests.functional.settings import test_settings
     'query_data, expected_answer',
     [
         (
-                {'search_word': 'The Star'},
-                {'length': 10, 'status':200}
+            {'search_word': 'The Star'},
+            {'length': 10, 'status': 200}
         ),
         (
-                {'search_word': 'Mashed potato'},
-                {'status': 200, 'length': 0}
+            {'search_word': 'Mashed potato'},
+            {'status': 200, 'length': 0}
         )
     ]
 )
 @pytest.mark.asyncio
-async def test_search(es_write_data, make_get_request, query_data, expected_answer, es_client, delete_index):
+async def test_search(
+    es_write_data: Callable,
+    make_get_request: Callable,
+    query_data: dict,
+    expected_answer: dict,
+    es_client: AsyncElasticsearch,
+    delete_index: Callable,
+) -> None:
     es_data = [{
         'id': str(uuid.uuid4()),
         'imdb_rating': 8.5,
@@ -51,6 +59,3 @@ async def test_search(es_write_data, make_get_request, query_data, expected_answ
     assert expected_answer['length'] == len(body['result'])
 
     await delete_index()
-
-
-
