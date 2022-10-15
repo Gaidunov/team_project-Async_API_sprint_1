@@ -2,8 +2,8 @@ services:
   fastapi-test:
     image: fastapi-movie-api
     command: gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:9000
-    ports:
-      - 9000:9000
+    expose:
+      - "9000"
     env_file:
       - .env
     container_name: fastapi-movie-api-test
@@ -24,8 +24,8 @@ services:
 
   test_elastic:
     image: elasticsearch:8.4.1
-    ports:
-      - "9200:9200"
+    expose:
+      - "9200"
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms200m -Xmx200m
