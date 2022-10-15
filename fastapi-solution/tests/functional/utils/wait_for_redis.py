@@ -1,22 +1,18 @@
 import time
-
+import os
 import redis
-from dotenv import load_dotenv
 
-from src.core.config import RedisSettings
-
-load_dotenv()
 
 if __name__ == '__main__':
-    redis_dsn = RedisSettings().dict()
 
     redis_client = redis.StrictRedis(
-        host=redis_dsn['host'],
-        port=redis_dsn['port'],
-        password=redis_dsn['password'],
+        host=os.environ['REDIS_HOST'],
+        port=os.environ['REDIS_PORT'],
+        password=os.environ['REDIS_PASSWORD'],
     )
 
     while True:
         if redis_client.ping():
+            print('Redis ok!')
             break
         time.sleep(1)
