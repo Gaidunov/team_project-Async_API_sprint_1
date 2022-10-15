@@ -1,14 +1,9 @@
-import os
 import datetime
-import uuid
-import json
 
-import aiohttp
 import pytest
 
-from elasticsearch import AsyncElasticsearch
-
 from tests.functional.settings import test_settings
+
 
 @pytest.mark.parametrize(
     'query_data, expected_answer',
@@ -54,7 +49,6 @@ async def test_film_by_id( query_data, expected_answer, es_write_data, make_get_
     assert expected_answer['status'] == status
     assert body == expected_answer['ok_body']
 
-    #удалили индекс для чистоты эксперимента
     await delete_index()
 
 @pytest.mark.parametrize(
@@ -102,6 +96,5 @@ async def test_get_all_films( query_data, expected_answer, es_write_data, make_g
     status, body = await make_get_request(url, params)
     assert body['result'][0]['imdb_rating'] == expected_answer['rating']
     assert status == 200
-    
-    #удаляем на всякий
+
     await delete_index()
