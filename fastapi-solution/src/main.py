@@ -3,7 +3,7 @@ from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-from core.config import ElasticSearchSettings, RedisSettings
+from src.core.config import ElasticSearchSettings, RedisSettings
 from src.api.v1 import films, persons, genres
 from src.core import config
 from src.db import elastic, redis
