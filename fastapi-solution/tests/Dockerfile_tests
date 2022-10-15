@@ -1,0 +1,7 @@
+FROM python:3.10.8-slim-bullseye
+
+WORKDIR /tests
+
+COPY . .
+RUN pip install -r requirements.txt
+    

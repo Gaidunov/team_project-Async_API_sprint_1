@@ -1,0 +1,52 @@
+services:
+  fastapi-test:
+    image: fastapi-movie-api
+    command: gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:9000
+    ports:
+      - 9000:9000
+    env_file:
+      - .env
+    container_name: fastapi-movie-api-test
+    volumes:
+      - ./tests:/tests
+
+  tests:
+    build:
+     context: .
+     dockerfile: Dockerfile_tests
+    command: /bin/bash -c "python3 /tests/functional/utils/wait_for_es.py && python3 /tests/functional/utils/wait_for_redis.py && pytest /tests/functional/src"
+    depends_on:
+      - test_elastic
+      - test_redis
+    env_file:
+      - .env
+    container_name: fastapi-tests
+
+  test_elastic:
+    image: elasticsearch:8.4.1
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms200m -Xmx200m
+      - xpack.security.enabled=false
+    container_name: fastapi-test_elastic
+
+  test_redis:
+    image: redis:6.2-alpine
+    expose:
+      - "6379"
+    command: redis-server --requirepass ${redis_password}
+    volumes:
+      - test_redis:/data
+    env_file:
+      - .env
+    container_name: fastapi-test_redis
+
+volumes:
+  test_redis:
+
+networks:
+  default:
+    external:
+      name: elasticsearch_network
