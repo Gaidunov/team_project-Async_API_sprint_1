@@ -3,9 +3,17 @@ version: '3.7'
 services:
   api:
     build: .
+    image: fastapi-movie-api
     command: gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
-    expose:
+    container_name: fastapi-api
+    ports:
       - "8000"
+    env_file:
+      - .env 
+    volumes:
+      - ./src:/app/src
+ 
+
 
   nginx:
     image: nginx:1.23.1
@@ -17,6 +25,8 @@ services:
     ports:
       - "80:80"
       - "8000:80"
+    container_name: fastapi-nginx
+
 
 networks:
   default:

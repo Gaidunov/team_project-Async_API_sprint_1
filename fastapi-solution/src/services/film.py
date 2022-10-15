@@ -128,7 +128,7 @@ class FilmService:
         if not data:
             return None
 
-        return data
+        return json.loads(data.decode('utf-8'))
 
     async def _put_search_result_to_cache(
         self,

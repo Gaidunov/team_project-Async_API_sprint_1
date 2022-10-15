@@ -1,22 +1,12 @@
 import time
+import os
 
-from dotenv import load_dotenv
 from elasticsearch import Elasticsearch
 
-from src.core.config import ElasticSearchSettings
-
-load_dotenv()
-
-
 if __name__ == '__main__':
-    elastic_dsn = ElasticSearchSettings().dict()
-
-    es_client = Elasticsearch(
-        hosts=f'{elastic_dsn["host"]}:{elastic_dsn["port"]}',
-        validate_cert=False,
-        use_ssl=False
-    )
+    es_client = Elasticsearch(hosts=os.environ['elastic_url'])
     while True:
         if es_client.ping():
+            print('Elastic ok!')
             break
         time.sleep(1)
