@@ -56,7 +56,7 @@ async def test_all_genre(
     [
         (
             {'id_': '1'},
-            {'status': 200, 'ok_body': {'id': '1', 'title': 'LaLaLa', 'imdb_rating': 8.5} }
+            {'status': 200, 'ok_body': {'id': '1', 'title': 'LaLaLa'}}
         ),
         (
             {'id_': '2'},
@@ -73,17 +73,16 @@ async def test_genre_on_id(
     es_client: AsyncElasticsearch,
     delete_index: Callable,
 ) -> None:
-    id_uid = str(uuid.uuid4())
-    es_data = {
-        'id': id_uid,
+    es_data = [{
+        'id': 1,
         'title': 'LaLaLa',
         'imdb_rating': 8.5
-    }
+    }]
     await es_write_data(es_data)
-    search_url = test_settings.service_url + f'/api/v1/films/genres/{id_uid}'
+    search_url = test_settings.service_url + f'/api/v1/genres/{query_data["id_"]}'
     status, body = await make_get_request(search_url, query_data)
 
     assert expected_answer['status'] == status
-    assert expected_answer['length'] == len(body['result'])
+    assert body == expected_answer['ok_body']
 
     await delete_index()
