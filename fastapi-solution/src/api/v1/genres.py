@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 from src.services.genre import GenersService, get_genre_service
 from src.core.constants import NOT_FOUND_MESS
+from src.services.utils import pagination
+
 
 router = APIRouter()
 
@@ -20,17 +22,18 @@ class Genres(BaseModel):
 
 
 @router.get('/', response_model=Genres)
-async def genre_details(
-    genre_service: GenersService = Depends(get_genre_service)
+async def get_all_genres(
+    genre_service: GenersService = Depends(get_genre_service),
+    pagination: dict = Depends(pagination)
+
 ) -> Genres:
     """## List all genres"""
-    genres = await genre_service.get_genres()
+    genres = await genre_service.get_genres(**pagination)
     if not genres:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail=f'genre {NOT_FOUND_MESS}'
         )
-    # logger.info('type', type=str(genres))
 
     return Genres(
         pagination=genres['pagination'],
@@ -57,22 +60,12 @@ async def get_genre_by_id(
 @router.get('/search/')
 async def search_genre_by_word(
     search_word: str,
-    page_size: int = Query(
-        ge=1,
-        le=100,
-        default=10
-    ),
-    page_number: int = Query(
-        default=0,
-        ge=0
-    ),
     genre_service: GenersService = Depends(get_genre_service),
+    pagination: dict = Depends(pagination)  
 ) -> Genres:
     """## Search genre by the word in the name"""
     genres = await genre_service.get_by_search_word(
-        search_word,
-        page_size=page_size,
-        page_number=page_number
+        search_word, **pagination
     )
 
     return Genres(
