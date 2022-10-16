@@ -13,6 +13,10 @@ that's enough :-)
 
 
 Для запуска тестов:
+
 `cd tests`
+
 `docker-compose up -d `
+
 `docker logs fastapi-tests` - to see tests results.
+
