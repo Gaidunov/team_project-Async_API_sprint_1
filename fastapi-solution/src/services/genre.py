@@ -2,13 +2,12 @@ from functools import lru_cache
 from typing import Optional, Union
 import json
 
-from aioredis import Redis
-from elasticsearch import AsyncElasticsearch, NotFoundError
+from elasticsearch import NotFoundError
 from fastapi import Depends
 from .utils import get_result
 
-from src.db.elastic import get_elastic
-from src.db.redis import get_redis
+from src.db.async_search_engine import get_elastic_engine, AsyncSearchEngine
+from src.db.async_cache_storage import get_redis, AsyncCacheStorage
 from src.models.genre import Genre
 
 GENRE_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
@@ -18,9 +17,13 @@ class GenersService:
     GENRE_BY_ID_KEY_TEMPLATE = 'genre_id_{0}'
     SEARCH_GENRE_KEY_TEMPLATE = 'search_genre_query_params_{0}'
 
-    def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
-        self.redis = redis
-        self.elastic = elastic
+    def __init__(
+        self,
+        cache: AsyncCacheStorage,
+        search_engine: AsyncSearchEngine,
+    ) -> None:
+        self._cache = cache
+        self._search_engine = search_engine
 
     async def get_by_id(self, genre_id: str) -> Optional[Genre]:
         genre = await self._genre_from_cache(genre_id)
@@ -64,7 +67,7 @@ class GenersService:
                 page_number,
                 Genre
             )
-        resp = await self.elastic.search(
+        resp = await self._search_engine.search(
             index='genres',
             body=elastic_query
         )
@@ -84,7 +87,7 @@ class GenersService:
         key: str,
         search_result: str,
     ):
-        await self.redis.set(
+        await self._cache.set(
             self.SEARCH_GENRE_KEY_TEMPLATE.format(key),
             json.dumps(search_result),
             expire=GENRE_CACHE_EXPIRE_IN_SECONDS,
@@ -118,7 +121,7 @@ class GenersService:
                 page_number,
                 Genre
             )
-        resp = await self.elastic.search(
+        resp = await self._search_engine.search(
             index='genres',
             body=elastic_query
         )
@@ -137,7 +140,7 @@ class GenersService:
         self,
         key: str,
     ) -> Union[dict, None]:
-        data = await self.redis.get(
+        data = await self._cache.get(
             self.SEARCH_GENRE_KEY_TEMPLATE.format(key)
         )
         if not data:
@@ -150,7 +153,7 @@ class GenersService:
         genre_id: str
     ) -> Optional[Genre]:
         try:
-            genre = await self.elastic.get(
+            genre = await self._search_engine.get(
                 'genres',
                 genre_id
             )
@@ -160,7 +163,7 @@ class GenersService:
         return Genre(**genre['_source'])
 
     async def _genre_from_cache(self, genre_id: str) -> Optional[Genre]:
-        data = await self.redis.get(
+        data = await self._cache.get(
             self.GENRE_BY_ID_KEY_TEMPLATE.format(genre_id)
         )
         if not data:
@@ -170,7 +173,7 @@ class GenersService:
         return genre
 
     async def _put_genre_to_cache(self, genre: Genre):
-        await self.redis.set(
+        await self._cache.set(
             self.GENRE_BY_ID_KEY_TEMPLATE.format(genre.id),
             genre.json(),
             expire=GENRE_CACHE_EXPIRE_IN_SECONDS
@@ -179,7 +182,7 @@ class GenersService:
 
 @lru_cache()
 def get_genre_service(
-    redis: Redis = Depends(get_redis),
-    elastic: AsyncElasticsearch = Depends(get_elastic),
+    cache: AsyncCacheStorage = Depends(get_redis),
+    search_engine: AsyncSearchEngine = Depends(get_elastic_engine),
 ) -> GenersService:
-    return GenersService(redis, elastic)
+    return GenersService(cache, search_engine)

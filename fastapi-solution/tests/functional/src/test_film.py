@@ -1,5 +1,7 @@
 import datetime
+from http import HTTPStatus
 from typing import Callable
+
 import pytest
 
 from tests.functional.settings import test_settings
@@ -10,11 +12,17 @@ from tests.functional.settings import test_settings
     [
         (
             {'id_': '1'},
-            {'status': 200, 'ok_body': {'id': '1', 'title': 'The Star', 'imdb_rating': 8.5} }
+            {
+                'status': HTTPStatus.OK,
+                'ok_body': {'id': '1', 'title': 'The Star', 'imdb_rating': 8.5}
+            }
         ),
         (
             {'id_': '2'},
-            {'status': 404, 'ok_body': {'detail': 'film not found'}}
+            {
+                'status': HTTPStatus.NOT_FOUND,
+                'ok_body': {'detail': 'film not found'}
+            }
         )
     ]
 )
@@ -63,11 +71,11 @@ async def test_film_by_id(
     [
         (
             {'sorting': 'imdb_rating'},
-            {'status': 200, 'rating': 19.0 }
+            {'status': HTTPStatus.OK, 'rating': 19.0}
         ),
         (
             {'sorting': '-imdb_rating'},
-            {'status': 200, 'rating':0}
+            {'status': HTTPStatus.OK, 'rating': 0}
         )
     ]
 )
@@ -108,6 +116,6 @@ async def test_get_all_films(
 
     status, body = await make_get_request(url, params)
     assert body['result'][0]['imdb_rating'] == expected_answer['rating']
-    assert status == 200
+    assert status == HTTPStatus.OK
 
     await delete_index()

@@ -1,4 +1,5 @@
 import uuid
+from http import HTTPStatus
 from typing import Callable
 
 import pytest
@@ -17,11 +18,11 @@ def f_index_name() -> str:
     [
         (
             {'sorting': 'imdb_rating'},
-            {'status': 200, 'rating': 8.5}
+            {'status': HTTPStatus.OK, 'rating': 8.5}
         ),
         (
             {'sorting': '-imdb_rating'},
-            {'status': 200, 'rating': 8.5}
+            {'status': HTTPStatus.OK, 'rating': 8.5}
         )
     ]
 )
@@ -46,7 +47,7 @@ async def test_all_genre(
 
     status, body = await make_get_request(url, params)
     assert body['result'][0]['imdb_rating'] == expected_answer['rating']
-    assert status == 200
+    assert status == HTTPStatus.OK
 
     await delete_index()
 
@@ -56,11 +57,11 @@ async def test_all_genre(
     [
         (
             {'id_': '1'},
-            {'status': 200, 'ok_body': {'id': '1', 'title': 'LaLaLa'}}
+            {'status': HTTPStatus.OK, 'ok_body': {'id': '1', 'title': 'LaLaLa'}}
         ),
         (
             {'id_': '2'},
-            {'status': 404, 'ok_body': {'detail': 'genre not found'}}
+            {'status': HTTPStatus.NOT_FOUND, 'ok_body': {'detail': 'genre not found'}}
         )
     ]
 )
@@ -70,7 +71,6 @@ async def test_genre_on_id(
     make_get_request: Callable,
     query_data: dict,
     expected_answer: dict,
-    es_client: AsyncElasticsearch,
     delete_index: Callable,
 ) -> None:
     es_data = [{

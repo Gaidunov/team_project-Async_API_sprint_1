@@ -2,12 +2,11 @@ import json
 from functools import lru_cache
 from typing import Optional, Union
 
-from aioredis import Redis
-from elasticsearch import AsyncElasticsearch, NotFoundError
+from elasticsearch import NotFoundError
 from fastapi import Depends
 
-from src.db.elastic import get_elastic
-from src.db.redis import get_redis
+from src.db.async_search_engine import get_elastic_engine, AsyncSearchEngine
+from src.db.async_cache_storage import get_redis, AsyncCacheStorage
 from src.models.person import Person
 from .utils import get_result
 
@@ -20,11 +19,11 @@ class PersonService:
 
     def __init__(
         self,
-        redis: Redis,
-        elastic: AsyncElasticsearch
+        cache: AsyncCacheStorage,
+        search_engine: AsyncSearchEngine,
     ) -> None:
-        self.redis = redis
-        self.elastic = elastic
+        self._cache = cache
+        self._search_engine = search_engine
 
     async def get_by_id(
         self,
@@ -73,7 +72,7 @@ class PersonService:
                 page_number,
                 Person
             )
-        resp = await self.elastic.search(
+        resp = await self._search_engine.search(
             index='person',
             body=elastic_query
         )
@@ -92,7 +91,7 @@ class PersonService:
         self,
         key: str,
     ) -> Union[dict, None]:
-        data = await self.redis.get(
+        data = await self._cache.get(
             self.SEARCH_PERSON_KEY_TEMPLATE.format(key)
         )
         if not data:
@@ -105,7 +104,7 @@ class PersonService:
         key: str,
         search_result: str,
     ):
-        await self.redis.set(
+        await self._search_engine.set(
             self.SEARCH_PERSON_KEY_TEMPLATE.format(key),
             json.dumps(search_result),
             expire=PERSON_CACHE_EXPIRE_IN_SECONDS,
@@ -137,7 +136,7 @@ class PersonService:
                 page_number,
                 Person
             )
-        resp = await self.elastic.search(
+        resp = await self._search_engine.search(
             index='person',
             body=elastic_query
         )
@@ -157,7 +156,7 @@ class PersonService:
         person_id: str
     ) -> Optional[Person]:
         try:
-            film = await self.elastic.get(
+            film = await self._search_engine.get(
                 'person',
                 person_id
             )
@@ -170,7 +169,7 @@ class PersonService:
         self,
         person_id: str
     ) -> Optional[Person]:
-        data = await self.redis.get(
+        data = await self._cache.get(
             self.PERSON_BY_ID_KEY_TEMPLATE.format(person_id)
         )
         if not data:
@@ -183,7 +182,7 @@ class PersonService:
         self,
         person: Person,
     ) -> None:
-        await self.redis.set(
+        await self._cache.set(
             self.PERSON_BY_ID_KEY_TEMPLATE.format(person.id),
             person.json(),
             expire=PERSON_CACHE_EXPIRE_IN_SECONDS
@@ -192,7 +191,7 @@ class PersonService:
 
 @lru_cache()
 def get_person_service(
-    redis: Redis = Depends(get_redis),
-    elastic: AsyncElasticsearch = Depends(get_elastic),
+    cache: AsyncCacheStorage = Depends(get_redis),
+    search_engine: AsyncSearchEngine = Depends(get_elastic_engine),
 ) -> PersonService:
-    return PersonService(redis, elastic)
+    return PersonService(cache, search_engine)
