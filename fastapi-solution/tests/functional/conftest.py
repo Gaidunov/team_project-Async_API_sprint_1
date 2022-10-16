@@ -5,7 +5,7 @@ import asyncio
 import json
 from elasticsearch import AsyncElasticsearch
 
-from tests.functional.settings import test_settings
+from functional.settings import test_settings
 from typing import List
 
 
