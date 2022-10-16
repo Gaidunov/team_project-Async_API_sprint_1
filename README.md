@@ -11,6 +11,7 @@ Async API implemented using FastAPI with tests
 
 `docker-compose up -d `
 
-`docker logs fastapi-tests` - to see tests results
+`docker logs fastapi-tests` - to see tests results.
+
 
 that's enough :-) 
