@@ -5,7 +5,7 @@ from typing import Callable
 
 import pytest
 
-from functional.settings import test_settings
+from tests.functional.settings import test_settings
 
 
 @pytest.mark.parametrize(
