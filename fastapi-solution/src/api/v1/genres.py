@@ -30,7 +30,6 @@ async def genre_details(
             status_code=HTTPStatus.NOT_FOUND,
             detail=f'genre {NOT_FOUND_MESS}'
         )
-    # logger.info('type', type=str(genres))
 
     return Genres(
         pagination=genres['pagination'],

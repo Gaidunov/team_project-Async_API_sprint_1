@@ -1,7 +1,8 @@
 import datetime
 import uuid
+from http import HTTPStatus
 from typing import Callable
-from elasticsearch import AsyncElasticsearch
+
 import pytest
 
 from tests.functional.settings import test_settings
@@ -12,11 +13,11 @@ from tests.functional.settings import test_settings
     [
         (
             {'search_word': 'The Star'},
-            {'length': 10, 'status': 200}
+            {'length': 10, 'status': HTTPStatus.OK}
         ),
         (
             {'search_word': 'Mashed potato'},
-            {'status': 200, 'length': 0}
+            {'status': HTTPStatus.OK, 'length': 0}
         )
     ]
 )
@@ -26,7 +27,6 @@ async def test_search(
     make_get_request: Callable,
     query_data: dict,
     expected_answer: dict,
-    es_client: AsyncElasticsearch,
     delete_index: Callable,
 ) -> None:
     es_data = [{

@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from pydantic.schema import List, Dict
 
 from src.services.person import PersonService, get_person_service
 from src.core.constants import NOT_FOUND_MESS
