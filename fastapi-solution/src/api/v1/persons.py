@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 from src.services.person import PersonService, get_person_service
 from src.core.constants import NOT_FOUND_MESS
+from src.services.utils import pagination
+
 
 router = APIRouter()
 
@@ -40,22 +42,12 @@ async def get_person_by_id(
 @router.get('/search/')
 async def search_person_by_word(
     search_word: str,
-    page_size: int = Query(
-        ge=1,
-        le=100,
-        default=10
-    ),
-    page_number: int = Query(
-        default=0,
-        ge=0
-    ),
+    pagination: dict = Depends(pagination),
     person_service: PersonService = Depends(get_person_service),
 ) -> Persons:
     """## Search person by the word in name"""
     persons = await person_service.get_by_search_word(
-        search_word,
-        page_size=page_size,
-        page_number=page_number
+        search_word, **pagination
     )
 
     return Persons(
@@ -66,8 +58,7 @@ async def search_person_by_word(
 
 @router.get('/')
 async def get_all_persons(
-    page_size: int = Query(ge=1, le=100, default=10, alias='page[size]'),
-    page_number: int = Query(default=0, ge=0, alias='page[number]'),
+    pagination: dict = Depends(pagination),
     sort: str = Query(
         default='id',
         regex='^-?(id)',
@@ -76,9 +67,7 @@ async def get_all_persons(
 ) -> Persons:
     """## List all persons"""
     films = await person_service.get_persons(
-        page_size=page_size,
-        page_number=page_number,
-        order_by=sort
+        order_by=sort, **pagination
     )
 
     return Persons(
