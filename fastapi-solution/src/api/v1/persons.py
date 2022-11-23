@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from src.services.person import PersonService, get_person_service
 from src.core.constants import NOT_FOUND_MESS
 from src.services.utils import pagination
+from src.auth import token_verification
 
 
 router = APIRouter()
@@ -24,6 +25,7 @@ class Persons(BaseModel):
 
 
 @router.get('/{person_id}', response_model=Person)
+@token_verification
 async def get_person_by_id(
     person_id: str,
     person_service: PersonService = Depends(get_person_service)
@@ -40,6 +42,7 @@ async def get_person_by_id(
 
 
 @router.get('/search/')
+@token_verification
 async def search_person_by_word(
     search_word: str,
     pagination: dict = Depends(pagination),
@@ -57,6 +60,7 @@ async def search_person_by_word(
 
 
 @router.get('/')
+@token_verification
 async def get_all_persons(
     pagination: dict = Depends(pagination),
     sort: str = Query(

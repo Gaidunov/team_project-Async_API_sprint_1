@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from src.services.genre import GenersService, get_genre_service
 from src.core.constants import NOT_FOUND_MESS
 from src.services.utils import pagination
+from src.auth import token_verification
 
 
 router = APIRouter()
@@ -22,6 +23,7 @@ class Genres(BaseModel):
 
 
 @router.get('/', response_model=Genres)
+@token_verification
 async def get_all_genres(
     genre_service: GenersService = Depends(get_genre_service),
     pagination: dict = Depends(pagination)
@@ -42,6 +44,7 @@ async def get_all_genres(
 
 
 @router.get('/{genre_id}', response_model=Genre)   
+@token_verification
 async def get_genre_by_id(
     genre_id: str,
     genre_service: GenersService = Depends(get_genre_service)
@@ -58,6 +61,7 @@ async def get_genre_by_id(
 
 
 @router.get('/search/')
+@token_verification
 async def search_genre_by_word(
     search_word: str,
     genre_service: GenersService = Depends(get_genre_service),

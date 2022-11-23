@@ -8,6 +8,7 @@ from pydantic.schema import List, Dict
 from src.services.film import FilmService, get_film_service
 from src.core.constants import NOT_FOUND_MESS
 from src.services.utils import pagination
+from src.auth import token_verification
 
 router = APIRouter()
 
@@ -24,6 +25,7 @@ class Films(BaseModel):
 
 
 @router.get('/{film_id}', response_model=Film)
+@token_verification
 async def get_movie_by_id(
                         film_id, 
                         film_service: FilmService = Depends(get_film_service),
@@ -40,6 +42,7 @@ async def get_movie_by_id(
 
 
 @router.get('/search/')
+@token_verification
 async def search_movie_by_word(
                             search_word: str,
                             film_service: FilmService = Depends(get_film_service),
@@ -55,6 +58,7 @@ async def search_movie_by_word(
 
 
 @router.get('/')
+@token_verification
 async def get_all_movies(
         sort: str = Query(
         default='imdb_rating',
