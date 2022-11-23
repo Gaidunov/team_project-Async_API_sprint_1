@@ -14,7 +14,7 @@ services:
     build:
      context: .
      dockerfile: Dockerfile_tests
-    command: /bin/bash -c "python3 /tests/functional/utils/wait_for_es.py && python3 /tests/functional/utils/wait_for_redis.py && pytest /tests/functional/src"
+    command: /bin/bash -c "python3 -m functional.utils.wait_for_es && python3 -m functional.utils.wait_for_redis && pytest /tests/functional/src"
     depends_on:
       - test_elastic
       - test_redis

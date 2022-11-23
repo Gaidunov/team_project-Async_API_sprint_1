@@ -1,5 +1,7 @@
-import pytest
+from http import HTTPStatus
 from typing import Callable
+
+import pytest
 
 from tests.functional.settings import test_settings
 
@@ -15,7 +17,7 @@ def f_index_name() -> str:
         (
             {'id_': '1'},
             {
-                'status': 200,
+                'status': HTTPStatus.OK,
                 'ok_body': {
                     'film_ids': '1',
                     'id': '1',
@@ -27,7 +29,7 @@ def f_index_name() -> str:
         (
             {'id_': '2'},
             {
-                'status': 404,
+                'status': HTTPStatus.NOT_FOUND,
                 'ok_body': {'detail': 'film not found'}
             }
         )
@@ -63,11 +65,11 @@ async def test_person_by_id(
     [
         (
             {'sorting': 'id'},
-            {'status': 200, 'id': '19'}
+            {'status': HTTPStatus.OK, 'id': '19'}
         ),
         (
             {'sorting': '-id'},
-            {'status': 200, 'id': '0'}
+            {'status': HTTPStatus.OK, 'id': '0'}
         )
     ]
 )
@@ -89,11 +91,15 @@ async def test_get_all_persons(
     await es_write_data(es_data)
 
     url = test_settings.service_url + f'/api/v1/persons/'
-    params = {'page[size]': 10, 'sort': query_data['sorting'], 'page[number]': 0}
+    params = {
+        'page[size]': 10,
+        'sort': query_data['sorting'],
+        'page[number]': 0
+    }
 
     status, body = await make_get_request(url, params)
     assert body['result'][0]['id'] == expected_answer['id']
     assert len(body['result']) == 10
-    assert status == 200
+    assert status == HTTPStatus.OK
 
     await delete_index()
